@@ -24,3 +24,12 @@ vim.ce1002 [name]
   name 是作業的代碼(A1,A2,E1,E2 etc.)
   * 會自動生成檔案，並用vim開啟
 
+
+使用方式
+------
+  * vim.ce1002 [name] 開啟java
+  * zip.ce1002 [name] 打包java
+  * upload.ce1002 [name] 上傳zip
+  * vim.ce1002之下可用F4完成zip upload兩個步驟
+  
+
