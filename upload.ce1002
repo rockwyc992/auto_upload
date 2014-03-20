@@ -1,31 +1,45 @@
 #!/usr/bin/python2
 #coding=utf-8
 
-#設定值
-user = "102502044"
-passwd = "1401155050"
-homedir= "/home/rockwyc992"
-filename = homedir+"/s102502044.zip"
-
 import sys
-import httplib
 import urllib2
 import urllib
 import cookielib
 import re
+from os.path import expanduser
 from poster.encode import multipart_encode
 from poster.streaminghttp import register_openers
+
+#設定值
+homedir = expanduser('~')
+user = passwd = filedir = None
+config_file = open(homedir+'/.config/auto_upload.ce1002', 'r').readlines()
+for line in config_file:
+    match = re.search(ur'^(user|password|filedir)=(.*)', line)
+    if match is not None:
+        if match.group(1) == 'user':
+            user = match.group(2)
+        elif match.group(1) == 'password':
+            passwd = match.group(2)
+if user is None or passwd is None:
+    if user is None:
+        print 'user is None'
+    if passwd is None:
+        print 'password is None'
+    exit()
+filename = homedir+"/s"+user+".zip"
+
 
 #處理參數
 want=str(sys.argv[1])
 alpha = want[0]
-number = int(want[1:])
+number = want[1:]
 
 #需要用到的4個網址
 auth_url = 'http://lms.minelab.tw'
 list_url = 'http://lms.minelab.tw/chooseCourse/'
 view_url = 'http://lms.minelab.tw/viewCourse/'
-upload_url='http://lms.minelab.tw/tasks/'
+upload_url='http://lms.minelab.tw'
 
 #初始化opener
 opener = register_openers()
@@ -37,48 +51,54 @@ data = {}
 data['account'] = user
 data['password']= passwd
 post_data=urllib.urlencode(data)
-
-req = urllib2.Request(auth_url,post_data)
+req = urllib2.Request(auth_url, post_data)
 result = opener.open(req)
 
 #取得課程資訊
-result = opener.open(list_url)
+req = urllib2.Request(list_url)
+result = opener.open(req)
+
 data={}
 data['course[name]']="CE1002-B"
 
 #抓取form
-match = re.search(ur"id=\"new_course\"(?:.|\n)*?form>", str(result.read()))
+match = re.search(ur'id="new_course"(?:.|\n)*form>', str(result.read()))
 #抓取input
-match = re.findall(ur"input(?:.|\n)*?(?:/>|/input>)", str(match.group()))
+match = re.findall(ur'input[^>]*" />', str(match.group()))
 #抓取3個必須的name value
 for i in match:
-    want = re.search(ur"name=\"(.*?)\".*?value=\"(.*?)\"",str(i))
+    want = re.search(ur'name="([^"]*)".*value="([^"]*)"',str(i))
     name = want.group(1)
     value = want.group(2)
     data[name]=value
-
 post_data=urllib.urlencode(data)
-result = opener.open(view_url, post_data)
 
-#取得各項作業的連結
-match = re.findall(ur"<a\s*href=\"/tasks/\w*\">(?:[AEMPQ].*?#\w*)</a>", str(result.read()))
+req = urllib2.Request(view_url, post_data)
+result = opener.open(req)
 
-#確認是否為$1輸入的項目
-for i in match:
-    want = re.search(ur"<a\s*href=\"/tasks/(\w*)\">([AEMPQ]).*?#(\w*)</a>", str(i))
-    url_num = want.group(1)
-    first = want.group(2)
-    tail = int(want.group(3))
-    if first==alpha and tail == number:
-        upload_url += str(url_num)
-        break
+#取得作業的連結
+match = re.search(ur'<a href="(/tasks/\d*)">' + alpha + '[^<>]*#' + number + '</a>', str(result.read()))
+upload_url += match.group(1)
+
+req = urllib2.Request(upload_url)
+result = str(opener.open(req).read())
+
+#自動評分
+if(alpha == 'E'):
+    token = re.search(ur'<meta content="([^">]*)" name="csrf-token"', result).group(1)
+    match = re.findall(ur'<a href="([^"]*stars=' + stars + ')"[^>]*>' + stars + '</a>', result)
+    for i in match:
+        i = auth_url + i
+        req = urllib2.Request(i, "")
+        req.add_header('X-CSRF-Token', token)
+        req.add_header('Accept', 'text/javascript')
+        opener.open(req)
+
 
 #取得上傳資訊
-result = opener.open(upload_url)
-data={}
-
 #抓取form
-match = re.search(ur"action=\"/tasks/\w*/uploadFile\"(?:.|\n)*?form>", str(result.read()))
+data={}
+match = re.search(ur"action=\"/tasks/\w*/uploadFile\"(?:.|\n)*?form>", result)
 if match is not None:
     #抓取input
     match = re.findall(ur"input(?:.|\n)*?(?:/>|/input>)", str(match.group()))
@@ -94,16 +114,20 @@ else:
 
     #抓取form
     match = re.search(ur"action=\"/tasks/\w*/uploadFile\"(?:.|\n)*?form>", str(result.read()))
-    #抓取input
-    match = re.findall(ur"input(?:.|\n)*?(?:/>|/input>)", str(match.group()))
-    #抓取5個必須的name value
-    for i in match:
-        want = re.search(ur"name=\"(.*?)\".*?value=\"(.*?)\"",str(i))
-        if want is not None:
-            name = want.group(1)
-            value = want.group(2)
-            data[name]=value
-    
+    if match is not None:
+        #抓取input
+        match = re.findall(ur"input(?:.|\n)*?(?:/>|/input>)", str(match.group()))
+        #抓取5個必須的name value
+        for i in match:
+            want = re.search(ur"name=\"(.*?)\".*?value=\"(.*?)\"",str(i))
+            if want is not None:
+                name = want.group(1)
+                value = want.group(2)
+                data[name]=value
+    else:
+        print "上傳網址不存在"
+        exit()
+
 upload_url += "/uploadFile"
 
 data['file'] = open(filename, "rb")
@@ -112,5 +136,3 @@ datagen, headers = multipart_encode(data)
 
 request = urllib2.Request(upload_url, datagen, headers)
 result =  opener.open(request)
-
-

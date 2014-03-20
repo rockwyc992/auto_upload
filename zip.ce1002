@@ -1,20 +1,25 @@
 #!/bin/bash
-
-
-#設定值
-Number="102502044"
-ProjectDir="/home/rockwyc992/code/java/ce1002"
-
-#取得小寫
 Pname=`echo $1 | tr "[:upper:]" "[:lower:]"`
 
-#建立暫存資料夾
-mkdir -p /tmp/ce1002/s"$Number"
-from=""$ProjectDir"/src/ce1002/"$Pname"/s"$Number"/"$1".java"
-to="/tmp/ce1002/s"$Number"/"$1".java"
-cp $from $to
+user=
+while read line
+do
+    if [[ $line =~ user=(.*) ]] ;then
+        user=${BASH_REMATCH[1]}
+    fi
+done < "$HOME"'/.config/auto_upload.ce1002'
+
+if [[ -z $user ]];then
+    echo 'user is None.'
+    exit
+fi
+
+mkdir -p /tmp/ce1002/s"$user"
+from="$HOME"/ce1002/src/ce1002/"$Pname"/s"$user"
+to="/tmp/ce1002"
+cp -r $from $to
 
 cd /tmp/ce1002
-zip s"$Number".zip -r s"$Number"
-mv /tmp/ce1002/s"$Number".zip ~/s"$Number".zip
+zip s"$user".zip -r s"$user"
+mv /tmp/ce1002/s"$user".zip "$HOME"/s"$user".zip
 rm -r /tmp/ce1002

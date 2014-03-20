@@ -1,17 +1,20 @@
 #!/bin/bash
-
-
-#設定值
-Number="102502044"
-ProjectDir="/home/rockwyc992/code/java/ce1002"
-
-#取得小寫
 Pname=`echo $1 | tr "[:upper:]" "[:lower:]"`
+user=
+while read line
+do
+    if [[ $line =~ user=(.*) ]] ;then
+        user=${BASH_REMATCH[1]}
+    fi
+done < "$HOME"'/.config/auto_upload.ce1002'
 
-#建立檔案
-mkdir -p "$ProjectDir"/src/ce1002/"$Pname"/s"$Number"/
-touch "$ProjectDir"/src/ce1002/"$Pname"/s"$Number"/"$1".java
+if [[ -z $user ]];then
+    echo 'user is None.'
+    exit
+fi
 
-#開啟.java
-vim "$ProjectDir"/src/ce1002/"$Pname"/s"$Number"/"$1".java
-
+mkdir -p "$HOME"/ce1002/src/ce1002/"$Pname"/s"$user"/
+cd "$HOME"/ce1002/
+touch src/ce1002/"$Pname"/s"$user"/"$1".java
+cd "$HOME"/ce1002/src/ce1002/"$Pname"/s"$user"/
+vim -p3 "$HOME"/ce1002/ "$HOME"/ce1002/src/Main.java "$1".java
