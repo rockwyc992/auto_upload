@@ -1,7 +1,3 @@
-auto_upload
-------
-  ce1002 auto upload script
-
 .vimrc
 ------
   * 請手動設定s:user=學號
