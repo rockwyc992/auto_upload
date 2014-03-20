@@ -1,0 +1,116 @@
+#!/usr/bin/python2
+#coding=utf-8
+
+#設定值
+user = "102502044"
+passwd = "1401155050"
+homedir= "/home/rockwyc992"
+filename = homedir+"/s102502044.zip"
+
+import sys
+import httplib
+import urllib2
+import urllib
+import cookielib
+import re
+from poster.encode import multipart_encode
+from poster.streaminghttp import register_openers
+
+#處理參數
+want=str(sys.argv[1])
+alpha = want[0]
+number = int(want[1:])
+
+#需要用到的4個網址
+auth_url = 'http://lms.minelab.tw'
+list_url = 'http://lms.minelab.tw/chooseCourse/'
+view_url = 'http://lms.minelab.tw/viewCourse/'
+upload_url='http://lms.minelab.tw/tasks/'
+
+#初始化opener
+opener = register_openers()
+cookieJar=cookielib.CookieJar()
+opener.add_handler(urllib2.HTTPCookieProcessor(cookieJar))
+
+#登入
+data = {}
+data['account'] = user
+data['password']= passwd
+post_data=urllib.urlencode(data)
+
+req = urllib2.Request(auth_url,post_data)
+result = opener.open(req)
+
+#取得課程資訊
+result = opener.open(list_url)
+data={}
+data['course[name]']="CE1002-B"
+
+#抓取form
+match = re.search(ur"id=\"new_course\"(?:.|\n)*?form>", str(result.read()))
+#抓取input
+match = re.findall(ur"input(?:.|\n)*?(?:/>|/input>)", str(match.group()))
+#抓取3個必須的name value
+for i in match:
+    want = re.search(ur"name=\"(.*?)\".*?value=\"(.*?)\"",str(i))
+    name = want.group(1)
+    value = want.group(2)
+    data[name]=value
+
+post_data=urllib.urlencode(data)
+result = opener.open(view_url, post_data)
+
+#取得各項作業的連結
+match = re.findall(ur"<a\s*href=\"/tasks/\w*\">(?:[AEMPQ].*?#\w*)</a>", str(result.read()))
+
+#確認是否為$1輸入的項目
+for i in match:
+    want = re.search(ur"<a\s*href=\"/tasks/(\w*)\">([AEMPQ]).*?#(\w*)</a>", str(i))
+    url_num = want.group(1)
+    first = want.group(2)
+    tail = int(want.group(3))
+    if first==alpha and tail == number:
+        upload_url += str(url_num)
+        break
+
+#取得上傳資訊
+result = opener.open(upload_url)
+data={}
+
+#抓取form
+match = re.search(ur"action=\"/tasks/\w*/uploadFile\"(?:.|\n)*?form>", str(result.read()))
+if match is not None:
+    #抓取input
+    match = re.findall(ur"input(?:.|\n)*?(?:/>|/input>)", str(match.group()))
+    #抓取5個必須的name value
+    for i in match:
+        want = re.search(ur"name=\"(.*?)\".*?value=\"(.*?)\"",str(i))
+        if want is not None:
+            name = want.group(1)
+            value = want.group(2)
+            data[name]=value
+else:
+    result = opener.open(upload_url+"/editFile")
+
+    #抓取form
+    match = re.search(ur"action=\"/tasks/\w*/uploadFile\"(?:.|\n)*?form>", str(result.read()))
+    #抓取input
+    match = re.findall(ur"input(?:.|\n)*?(?:/>|/input>)", str(match.group()))
+    #抓取5個必須的name value
+    for i in match:
+        want = re.search(ur"name=\"(.*?)\".*?value=\"(.*?)\"",str(i))
+        if want is not None:
+            name = want.group(1)
+            value = want.group(2)
+            data[name]=value
+    
+upload_url += "/uploadFile"
+
+data['file'] = open(filename, "rb")
+datagen, headers = multipart_encode(data)
+
+
+request = urllib2.Request(upload_url, datagen, headers)
+result =  opener.open(request)
+
+

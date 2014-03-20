@@ -1,0 +1,17 @@
+#!/bin/bash
+
+
+#設定值
+Number="102502044"
+ProjectDir="/home/rockwyc992/code/java/ce1002"
+
+#取得小寫
+Pname=`echo $1 | tr "[:upper:]" "[:lower:]"`
+
+#建立檔案
+mkdir -p "$ProjectDir"/src/ce1002/"$Pname"/s"$Number"/
+touch "$ProjectDir"/src/ce1002/"$Pname"/s"$Number"/"$1".java
+
+#開啟.java
+vim "$ProjectDir"/src/ce1002/"$Pname"/s"$Number"/"$1".java
+
