@@ -1,6 +1,5 @@
 au_ce1002.vim
 ------
-  * 請手動設定s:user=學號
   * F4 自動打包上傳
 
 install.sh

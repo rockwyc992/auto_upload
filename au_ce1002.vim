@@ -1,5 +1,3 @@
-let s:Number = "102502044"
-
 "F4 打包在桌面 + 自動上傳lms
 imap <F4> <ESC><F4>
 map  <F4> :call Zip_ce1002()<CR>
