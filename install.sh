@@ -5,7 +5,7 @@ mkdir -p "$HOME"/.au_ce1002/bin/
 cp zip.ce1002 "$HOME"/.au_ce1002/bin/
 cp vim.ce1002 "$HOME"/.au_ce1002/bin/
 cp upload.ce1002 "$HOME"/.au_ce1002/bin/
-cp auto_upload.ce1002.vim "$HOME"/.vim/plugin/
+cp au_ce1002.vim "$HOME"/.vim/plugin/
 
 read -p '請輸入lms帳號：' user
 read -p '請輸入lms密碼：' passwd
