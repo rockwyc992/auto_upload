@@ -13,7 +13,7 @@ from poster.streaminghttp import register_openers
 #設定值
 homedir = expanduser('~')
 user = passwd = filedir = None
-config_file = open(homedir+'/.config/auto_upload.ce1002', 'r').readlines()
+config_file = open(homedir+'/.au_ce1002/config', 'r').readlines()
 for line in config_file:
     match = re.search(ur'^(user|password|filedir)=(.*)', line)
     if match is not None:
