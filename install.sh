@@ -1,5 +1,7 @@
 #!/bin/bash
 
+mkdir -p "$HOME"/.au_ce1002/bin/
+
 cp zip.ce1002 "$HOME"/.au_ce1002/bin/
 cp vim.ce1002 "$HOME"/.au_ce1002/bin/
 cp upload.ce1002 "$HOME"/.au_ce1002/bin/
